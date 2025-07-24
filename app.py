@@ -83,7 +83,7 @@ def update_request():
         print("Ошибка при обновлении заявки:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-if name == 'main':
+if True:
     init_db()
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
