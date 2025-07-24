@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Обменник валют - заявка</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }
+  label { display: block; margin-top: 15px; }
+  input, select, button, textarea { width: 100%; padding: 8px; margin-top: 5px; }
+  button { background: #007bff; color: white; border: none; cursor: pointer; }
+  button:hover { background: #0056b3; }
+  #message { margin-top: 20px; font-weight: bold; color: green; }
+</style>
+</head>
+<body>
+<h2>Создать заявку на обмен</h2>
+<form id="exchangeForm">
+  <label>Имя:
+    <input name="name" required />
+  </label>
+  <label>Контакт (Telegram или email):
+    <input name="contact" required />
+  </label>
+  <label>Отдаёте:
+    <select name="from_currency">
+      <option value="RUB">RUB</option>
+    </select>
+  </label>
+  <label>Получаете:
+    <select name="to_currency" required>
+      <option value="USDT TRC-20">USDT TRC-20</option>
+      <option value="BTC">BTC</option>
+    </select>
+  </label>
+  <label>Сумма:
+    <input type="number" name="amount" min="1" step="any" required />
+  </label>
+  <label>Куда отправить крипту (адрес USDT TRC-20 или BTC):
+    <textarea name="crypto_address" rows="2" required></textarea>
+  </label>
+  <button type="submit">Отправить заявку</button>
+</form>
+
+<div id="message"></div>
+
+<script>
+  const form = document.getElementById('exchangeForm');
+  const msg = document.getElementById('message');
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+      name: form.name.value.trim(),
+      contact: form.contact.value.trim(),
+      from_currency: form.from_currency.value,
+      to_currency: form.to_currency.value,
+      amount: parseFloat(form.amount.value),
+      crypto_address: form.crypto_address.value.trim(),
+    };
+
+    try {
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (json.ok) {
+        msg.textContent = "🔄 Ожидайте выдачу реквизитов. Мы скоро с вами свяжемся.";
+        form.reset();
+      } else {
+        msg.textContent = "Ошибка при отправке заявки.";
+      }
+    } catch (e) {
+      msg.textContent = "Ошибка сети.";
+    }
+  };
+</script>
+</body>
+</html>
