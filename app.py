@@ -1,8 +1,11 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from datetime import datetime
 import sqlite3
 
-app = Flask(__name__)
+app = Flask(name)
+CORS(app)
+
 DB = 'database.db'
 
 def get_db():
@@ -38,16 +41,21 @@ def admin():
 @app.route('/api/submit', methods=['POST'])
 def submit():
     data = request.json
-    with get_db() as db:
-        db.execute(
-            '''INSERT INTO requests 
-            (name, contact, from_currency, to_currency, amount, crypto_address, time, status, payment_info) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-            (data['name'], data['contact'], data['from_currency'], data['to_currency'],
-             data['amount'], data['crypto_address'], datetime.now().isoformat(), 'new', '')
-        )
-    return jsonify({'ok': True})
+    print("Получена заявка:", data)  # Лог в консоль Replit
+    try:
+        with get_db() as db:
+            db.execute(
+                '''INSERT INTO requests 
+                (name, contact, from_currency, to_currency, amount, crypto_address, time, status, payment_info) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (data['name'], data['contact'], data['from_currency'], data['to_currency'],
+                data['amount'], data['crypto_address'], datetime.now().isoformat(), 'new', '')
+            )
+        return jsonify({'ok': True})
+    except Exception as e:
+        print("Ошибка при сохранении:", e)
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
-if __name__ == '__main__':
+if name == 'main':
     init_db()
     app.run(host='0.0.0.0', port=3000)
