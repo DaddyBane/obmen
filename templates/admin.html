@@ -1,65 +1,90 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<title>Админ панель обменника</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 900px; margin: 20px auto; }
-  .request { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-  textarea { width: 100%; height: 60px; margin-top: 5px; }
-  button { margin-right: 5px; padding: 5px 10px; cursor: pointer; }
-  .status-new { color: blue; }
-  .status-waiting_payment { color: orange; }
-  .status-paid { color: green; }
-  .status-sent { color: gray; }
-</style>
+  <meta charset="UTF-8">
+  <title>Админка заявок</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    h1 { margin-bottom: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    th { background-color: #eee; }
+    input[type="text"] { width: 100%; }
+    button { padding: 4px 10px; }
+  </style>
 </head>
 <body>
-<h2>Админ панель — заявки на обмен</h2>
-<div id="requests"></div>
+  <h1>Заявки</h1>
+  <table id="requests-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Имя</th>
+        <th>Контакт</th>
+        <th>Из</th>
+        <th>В</th>
+        <th>Сумма</th>
+        <th>Адрес</th>
+        <th>Время</th>
+        <th>Комментарий</th>
+        <th>Действие</th>
+      </tr>
+    </thead>
+    <tbody id="requests-body">
+      <tr><td colspan="10">Загрузка...</td></tr>
+    </tbody>
+  </table>
 
-<script>
-  async function loadRequests() {
-    const res = await fetch('/api/requests');
-    const requests = await res.json();
+  <script>
+    async function loadRequests() {
+      const res = await fetch('/api/requests');
+      const data = await res.json();
+      const body = document.getElementById('requests-body');
+      body.innerHTML = '';
 
-    const container = document.getElementById('requests');
-    container.innerHTML = '';
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="10">Нет заявок</td></tr>';
+        return;
+      }
 
-    requests.forEach(r => {
-      const div = document.createElement('div');
-      div.className = 'request';
-      div.innerHTML = 
-        <b>Заявка #${r.id}</b> — <span class="status-${r.status}">${r.status}</span><br/>
-        <b>Имя:</b> ${r.name}<br/>
-        <b>Контакт:</b> ${r.contact}<br/>
-        <b>Отдаёт:</b> ${r.from_currency}<br/>
-        <b>Получает:</b> ${r.to_currency}<br/>
-        <b>Сумма:</b> ${r.amount}<br/>
-        <b>Адрес для крипты:</b><br/>
-        <textarea readonly rows="2">${r.crypto_address}</textarea><br/>
-        <b>Реквизиты для оплаты:</b><br/>
-        <textarea id="payinfo-${r.id}" rows="3">${r.payment_info || ''}</textarea><br/>
-        <button onclick="updateStatus(${r.id}, 'waiting_payment')">Выдать реквизиты</button>
-        <button onclick="updateStatus(${r.id}, 'paid')">Отметить как оплачено</button>
-        <button onclick="updateStatus(${r.id}, 'sent')">Отметить как крипта отправлена</button>
-      ;
-      container.appendChild(div);
-    });
-  }
+      for (const r of data) {
+        const row = document.createElement('tr');
+        row.innerHTML = 
+          <td>${r.id}</td>
+          <td>${r.name}</td>
+          <td>${r.contact}</td>
+          <td>${r.from_currency}</td>
+          <td>${r.to_currency}</td>
+          <td>${r.amount}</td>
+          <td>${r.crypto_address}</td>
+          <td>${new Date(r.time).toLocaleString()}</td>
+          <td>
+            <input type="text" id="comment-${r.id}" value="${r.payment_info || ''}" placeholder="Реквизиты...">
+          </td>
+          <td>
+            <button onclick="sendComment(${r.id})">Отправить</button>
+          </td>
+        ;
+        body.appendChild(row);
+      }
+    }
 
-  async function updateStatus(id, status) {
-    const payment_info = document.getElementById(payinfo-${id}).value.trim();
-    await fetch('/api/update', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({id, status, payment_info})
-    });
+    async function sendComment(id) {
+      const comment = document.getElementById('comment-' + id).value;
+      const res = await fetch('/api/requests/' + id, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payment_info: comment })
+      });
+
+      if (res.ok) {
+        alert('Реквизиты отправлены!');
+      } else {
+        alert('Ошибка при отправке!');
+      }
+    }
+
     loadRequests();
-  }
-
-  loadRequests();
-  setInterval(loadRequests, 5000);
-</script>
+  </script>
 </body>
 </html>
