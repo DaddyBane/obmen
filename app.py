@@ -41,7 +41,7 @@ def admin():
 @app.route('/api/submit', methods=['POST'])
 def submit():
     data = request.json
-    print("Получена заявка:", data)  # Лог в консоль Replit
+    print("Получена заявка:", data)
     try:
         with get_db() as db:
             db.execute(
@@ -49,7 +49,7 @@ def submit():
                 (name, contact, from_currency, to_currency, amount, crypto_address, time, status, payment_info) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                 (data['name'], data['contact'], data['from_currency'], data['to_currency'],
-                data['amount'], data['crypto_address'], datetime.now().isoformat(), 'new', '')
+                 data['amount'], data['crypto_address'], datetime.now().isoformat(), 'new', '')
             )
         return jsonify({'ok': True})
     except Exception as e:
