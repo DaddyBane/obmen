@@ -4,7 +4,7 @@ from datetime import datetime
 import sqlite3
 import os
 
-app = Flask(name)
+app = Flask(name)  # <-- исправлено
 CORS(app)
 
 DB = 'database.db'
@@ -57,7 +57,7 @@ def submit():
         print("Ошибка при сохранении:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-if name == 'main':
+if name == 'main':  # <-- исправлено
     init_db()
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
