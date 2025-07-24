@@ -5,7 +5,9 @@
   <title>Обменник валют — заявка</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #667eea, #764ba2);
@@ -15,6 +17,8 @@
       justify-content: center;
       align-items: center;
       color: #fff;
+      flex-direction: column;
+      padding: 20px;
     }
     form {
       background: rgba(255, 255, 255, 0.1);
@@ -25,6 +29,7 @@
       max-width: 420px;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
+      margin-bottom: 20px;
     }
     h2 {
       text-align: center;
@@ -81,21 +86,35 @@
       margin-top: 20px;
       font-weight: 700;
       font-size: 1rem;
+      color: #a0e7a0;
       text-align: center;
       min-height: 1.5em;
     }
-    #paymentInfoBlock {
-      margin-top: 20px;
-      background: rgba(0,0,0,0.3);
+    #paymentInfo {
+      background: rgba(255, 255, 255, 0.15);
       padding: 15px;
       border-radius: 10px;
+      max-width: 420px;
+      width: 100%;
+      color: #a0e7a0;
+      font-weight: 700;
       font-size: 1rem;
-      display: none; /* скрыт пока заявки нет */
+      text-align: center;
+      min-height: 1.5em;
       white-space: pre-wrap;
+      word-wrap: break-word;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
+
+    /* Адаптив для мобильных */
     @media (max-width: 480px) {
       form {
         padding: 25px 20px;
+        max-width: 90vw;
+      }
+      #paymentInfo {
         max-width: 90vw;
       }
     }
@@ -131,25 +150,45 @@
     <div id="message"></div>
   </form>
 
-  <div id="paymentInfoBlock"></div> <!-- блок для реквизитов -->
+  <div id="paymentInfo"></div>
 
   <script>
     const form = document.getElementById('exchangeForm');
     const msg = document.getElementById('message');
-    const paymentInfoBlock = document.getElementById('paymentInfoBlock');
+    const paymentDiv = document.getElementById('paymentInfo');
 
-    let currentRequestId = null; // сюда запишем ID заявки
+    let intervalId = null;
+    let userContact = '';
+
+    async function checkPaymentInfo(contact) {
+      try {
+        const res = await fetch('/api/requests');
+        const requests = await res.json();
+        // Ищем заявку по контакту с непустыми реквизитами
+        const userRequest = requests.find(r => r.contact === contact && r.payment_info && r.payment_info.trim() !== '');
+        if (userRequest) {
+          paymentDiv.textContent = 💰 Реквизиты для оплаты:\n${userRequest.payment_info};
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null; // остановить дальнейший опрос
+          }
+        } else {
+          paymentDiv.textContent = "⏳ Реквизиты ещё не выданы. Подождите...";
+        }
+      } catch {
+        paymentDiv.textContent = "❌ Ошибка при получении реквизитов.";
+      }
+    }
 
     form.onsubmit = async (e) => {
       e.preventDefault();
-      msg.style.color = "#fff";
       msg.textContent = "⏳ Отправка...";
-      paymentInfoBlock.style.display = 'none';
-      paymentInfoBlock.textContent = '';
+      paymentDiv.textContent = "";
+      userContact = form.contact.value.trim();
 
       const data = {
         name: form.name.value.trim(),
-        contact: form.contact.value.trim(),
+        contact: userContact,
         from_currency: form.from_currency.value,
         to_currency: form.to_currency.value,
         amount: parseFloat(form.amount.value),
@@ -163,13 +202,15 @@
           body: JSON.stringify(data)
         });
         const json = await res.json();
-
         if (json.ok) {
-          currentRequestId = json.request_id; // запоминаем id заявки
           msg.style.color = "#a0e7a0";
-          msg.textContent = "✅ Заявка принята! Ожидайте реквизиты ниже.";
+          msg.textContent = "✅ Заявка принята! Ожидайте выдачу реквизитов.";
           form.reset();
-          startPollingPaymentInfo(); // начинаем опрос реквизитов
+
+          // Запускаем опрос реквизитов каждые 5 секунд
+          intervalId = setInterval(() => {
+            checkPaymentInfo(userContact);
+          }, 5000);
         } else {
           msg.style.color = "#f88";
           msg.textContent = "❌ Ошибка при отправке заявки.";
@@ -179,37 +220,6 @@
         msg.textContent = "❌ Ошибка сети.";
       }
     };
-
-    async function fetchPaymentInfo() {
-      if (!currentRequestId) return;
-
-      try {
-        const res = await fetch('/api/requests');
-        const requests = await res.json();
-        const req = requests.find(r => r.id === currentRequestId);
-        if (req) {
-          if (req.payment_info && req.payment_info.trim().length > 0) {
-            paymentInfoBlock.style.display = 'block';
-            paymentInfoBlock.textContent = `Реквизиты для оплаты:\n${req.payment_info}`;
-          } else {
-            paymentInfoBlock.style.display = 'block';
-            paymentInfoBlock.textContent = "Реквизиты еще не выставлены администратором, подождите.";
-          }
-        } else {
-          paymentInfoBlock.style.display = 'none';
-          paymentInfoBlock.textContent = "";
-        }
-      } catch {
-        // игнорируем ошибки сети
-      }
-    }
-
-    let pollingInterval = null;
-    function startPollingPaymentInfo() {
-      if (pollingInterval) clearInterval(pollingInterval);
-      fetchPaymentInfo();
-      pollingInterval = setInterval(fetchPaymentInfo, 5000);
-    }
   </script>
 </body>
 </html>
