@@ -57,7 +57,33 @@ def submit():
         print("Ошибка при сохранении:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-if True:
+@app.route('/api/requests')
+def get_requests():
+    try:
+        with get_db() as db:
+            cursor = db.execute('SELECT * FROM requests ORDER BY id DESC')
+            rows = cursor.fetchall()
+            requests_list = [dict(row) for row in rows]
+        return jsonify(requests_list)
+    except Exception as e:
+        print("Ошибка при получении заявок:", e)
+        return jsonify([]), 500
+
+@app.route('/api/update', methods=['POST'])
+def update_request():
+    data = request.json
+    try:
+        with get_db() as db:
+            db.execute(
+                'UPDATE requests SET status = ?, payment_info = ? WHERE id = ?',
+                (data.get('status', ''), data.get('payment_info', ''), data['id'])
+            )
+        return jsonify({'ok': True})
+    except Exception as e:
+        print("Ошибка при обновлении заявки:", e)
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+if name == 'main':
     init_db()
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
