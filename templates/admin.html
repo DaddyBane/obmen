@@ -29,7 +29,7 @@
     requests.forEach(r => {
       const div = document.createElement('div');
       div.className = 'request';
-      div.innerHTML = `
+      div.innerHTML = 
         <b>Заявка #${r.id}</b> — <span class="status-${r.status}">${r.status}</span><br/>
         <b>Имя:</b> ${r.name}<br/>
         <b>Контакт:</b> ${r.contact}<br/>
@@ -43,13 +43,13 @@
         <button onclick="updateStatus(${r.id}, 'waiting_payment')">Выдать реквизиты</button>
         <button onclick="updateStatus(${r.id}, 'paid')">Отметить как оплачено</button>
         <button onclick="updateStatus(${r.id}, 'sent')">Отметить как крипта отправлена</button>
-      `;
+      ;
       container.appendChild(div);
     });
   }
 
   async function updateStatus(id, status) {
-    const payment_info = document.getElementById(`payinfo-${id}`).value.trim();
+    const payment_info = document.getElementById(payinfo-${id}).value.trim();
     await fetch('/api/update', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
