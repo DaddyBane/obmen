@@ -17,19 +17,17 @@
       justify-content: center;
       align-items: center;
       color: #fff;
-      flex-direction: column;
       padding: 20px;
     }
-    form {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 30px 40px;
+    .container {
+      background: rgba(255,255,255,0.1);
       border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      padding: 30px 40px;
       width: 100%;
       max-width: 420px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      margin-bottom: 20px;
     }
     h2 {
       text-align: center;
@@ -91,104 +89,72 @@
       min-height: 1.5em;
     }
     #paymentInfo {
-      background: rgba(255, 255, 255, 0.15);
+      margin-top: 25px;
+      background: rgba(0,0,0,0.3);
       padding: 15px;
       border-radius: 10px;
-      max-width: 420px;
-      width: 100%;
-      color: #a0e7a0;
-      font-weight: 700;
       font-size: 1rem;
-      text-align: center;
-      min-height: 1.5em;
+      color: #fff;
+      display: none;
       white-space: pre-wrap;
       word-wrap: break-word;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 0 10px 2px #6c63ff;
     }
-
-    /* Адаптив для мобильных */
     @media (max-width: 480px) {
-      form {
+      .container {
         padding: 25px 20px;
-        max-width: 90vw;
-      }
-      #paymentInfo {
         max-width: 90vw;
       }
     }
   </style>
 </head>
 <body>
-  <form id="exchangeForm" autocomplete="off">
+  <div class="container">
     <h2>Создать заявку на обмен</h2>
-    <label>Имя:
-      <input name="name" placeholder="Ваше имя" required />
-    </label>
-    <label>Контакт (Telegram или Email):
-      <input name="contact" placeholder="@username или email" required />
-    </label>
-    <label>Отдаёте:
-      <select name="from_currency">
-        <option value="RUB">RUB</option>
-      </select>
-    </label>
-    <label>Получаете:
-      <select name="to_currency" required>
-        <option value="USDT TRC-20">USDT TRC-20</option>
-        <option value="BTC">BTC</option>
-      </select>
-    </label>
-    <label>Сумма:
-      <input type="number" name="amount" min="1" step="any" placeholder="Сумма для обмена" required />
-    </label>
-    <label>Адрес для крипты:
-      <textarea name="crypto_address" rows="2" placeholder="Введите USDT TRC-20 или BTC адрес" required></textarea>
-    </label>
-    <button type="submit">Отправить заявку</button>
+    <form id="exchangeForm" autocomplete="off">
+      <label>Имя:
+        <input name="name" placeholder="Ваше имя" required />
+      </label>
+      <label>Контакт (Telegram или Email):
+        <input name="contact" placeholder="@username или email" required />
+      </label>
+      <label>Отдаёте:
+        <select name="from_currency" required>
+          <option value="RUB">RUB</option>
+        </select>
+      </label>
+      <label>Получаете:
+        <select name="to_currency" required>
+          <option value="USDT TRC-20">USDT TRC-20</option>
+          <option value="BTC">BTC</option>
+        </select>
+      </label>
+      <label>Сумма:
+        <input type="number" name="amount" min="1" step="any" placeholder="Сумма для обмена" required />
+      </label>
+      <label>Адрес для крипты:
+        <textarea name="crypto_address" rows="2" placeholder="Введите USDT TRC-20 или BTC адрес" required></textarea>
+      </label>
+      <button type="submit">Отправить заявку</button>
+    </form>
     <div id="message"></div>
-  </form>
-
-  <div id="paymentInfo"></div>
+    <div id="paymentInfo"></div>
+  </div>
 
   <script>
     const form = document.getElementById('exchangeForm');
     const msg = document.getElementById('message');
-    const paymentDiv = document.getElementById('paymentInfo');
-
-    let intervalId = null;
-    let userContact = '';
-
-    async function checkPaymentInfo(contact) {
-      try {
-        const res = await fetch('/api/requests');
-        const requests = await res.json();
-        // Ищем заявку по контакту с непустыми реквизитами
-        const userRequest = requests.find(r => r.contact === contact && r.payment_info && r.payment_info.trim() !== '');
-        if (userRequest) {
-          paymentDiv.textContent = 💰 Реквизиты для оплаты:\n${userRequest.payment_info};
-          if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null; // остановить дальнейший опрос
-          }
-        } else {
-          paymentDiv.textContent = "⏳ Реквизиты ещё не выданы. Подождите...";
-        }
-      } catch {
-        paymentDiv.textContent = "❌ Ошибка при получении реквизитов.";
-      }
-    }
-
+    const payInfo = document.getElementById('paymentInfo');
     form.onsubmit = async (e) => {
       e.preventDefault();
-      msg.textContent = "⏳ Отправка...";
-      paymentDiv.textContent = "";
-      userContact = form.contact.value.trim();
+      msg.style.color = "#fff";
+      msg.textContent = "⏳ Отправка заявки...";
+      payInfo.style.display = "none";
+      payInfo.textContent = "";
 
       const data = {
         name: form.name.value.trim(),
-        contact: userContact,
+        contact: form.contact.value.trim(),
         from_currency: form.from_currency.value,
         to_currency: form.to_currency.value,
         amount: parseFloat(form.amount.value),
@@ -204,13 +170,11 @@
         const json = await res.json();
         if (json.ok) {
           msg.style.color = "#a0e7a0";
-          msg.textContent = "✅ Заявка принята! Ожидайте выдачу реквизитов.";
-          form.reset();
+          msg.textContent = "✅ Заявка принята! Ждите реквизиты от админа.";
 
-          // Запускаем опрос реквизитов каждые 5 секунд
-          intervalId = setInterval(() => {
-            checkPaymentInfo(userContact);
-          }, 5000);
+          // Запускаем цикл опроса для получения реквизитов
+          pollPaymentInfo();
+          form.reset();
         } else {
           msg.style.color = "#f88";
           msg.textContent = "❌ Ошибка при отправке заявки.";
@@ -220,6 +184,34 @@
         msg.textContent = "❌ Ошибка сети.";
       }
     };
+
+    let pollIntervalId = null;
+
+    async function pollPaymentInfo() {
+      // Опрос каждые 5 секунд, пока не получим реквизиты
+      pollIntervalId = setInterval(async () => {
+        try {
+          const res = await fetch('/api/requests');
+          const requests = await res.json();
+
+          // Находим заявку текущего пользователя по имени + контакту (лучше, можно уникальный ID возвращать из submit, но упрощаем)
+          // Здесь сделаем упрощённо — покажем последнюю заявку текущего имени+контакта
+          const name = form.name.value.trim();
+          const contact = form.contact.value.trim();
+
+          const userRequest = requests.find(r => r.name === name && r.contact === contact);
+
+          if (userRequest && userRequest.payment_info && userRequest.payment_info.trim().length > 0) {
+            payInfo.style.display = "block";
+            payInfo.textContent = "Реквизиты для оплаты:\n\n" + userRequest.payment_info;
+            msg.textContent = "✅ Реквизиты получены!";
+            clearInterval(pollIntervalId);
+          }
+        } catch {
+          // Игнорируем ошибки в опросе
+        }
+      }, 5000);
+    }
   </script>
 </body>
 </html>
