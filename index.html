@@ -1,80 +1,167 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<title>Обменник валют - заявка</title>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; }
-  label { display: block; margin-top: 15px; }
-  input, select, button, textarea { width: 100%; padding: 8px; margin-top: 5px; }
-  button { background: #007bff; color: white; border: none; cursor: pointer; }
-  button:hover { background: #0056b3; }
-  #message { margin-top: 20px; font-weight: bold; color: green; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Обменник валют — заявка</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+    }
+    form {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 420px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+      transition: background-color 0.3s ease;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    input::placeholder,
+    textarea::placeholder {
+      color: #ddd;
+    }
+    input:focus, select:focus, textarea:focus {
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 5px 2px #667eea;
+    }
+    button {
+      margin-top: 25px;
+      width: 100%;
+      padding: 15px;
+      background: #6c63ff;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 15px rgba(108, 99, 255, 0.6);
+    }
+    button:hover {
+      background: #5548c8;
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(85, 72, 200, 0.7);
+    }
+    #message {
+      margin-top: 20px;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #a0e7a0;
+      text-align: center;
+      min-height: 1.5em;
+    }
+
+    /* Адаптив для мобильных */
+    @media (max-width: 480px) {
+      form {
+        padding: 25px 20px;
+        max-width: 90vw;
+      }
+    }
+  </style>
 </head>
 <body>
-<h2>Создать заявку на обмен</h2>
-<form id="exchangeForm">
-  <label>Имя:
-    <input name="name" required />
-  </label>
-  <label>Контакт (Telegram или email):
-    <input name="contact" required />
-  </label>
-  <label>Отдаёте:
-    <select name="from_currency">
-      <option value="RUB">RUB</option>
-    </select>
-  </label>
-  <label>Получаете:
-    <select name="to_currency" required>
-      <option value="USDT TRC-20">USDT TRC-20</option>
-      <option value="BTC">BTC</option>
-    </select>
-  </label>
-  <label>Сумма:
-    <input type="number" name="amount" min="1" step="any" required />
-  </label>
-  <label>Куда отправить крипту (адрес USDT TRC-20 или BTC):
-    <textarea name="crypto_address" rows="2" required></textarea>
-  </label>
-  <button type="submit">Отправить заявку</button>
-</form>
+  <form id="exchangeForm" autocomplete="off">
+    <h2>Создать заявку на обмен</h2>
+    <label>Имя:
+      <input name="name" placeholder="Ваше имя" required />
+    </label>
+    <label>Контакт (Telegram или Email):
+      <input name="contact" placeholder="@username или email" required />
+    </label>
+    <label>Отдаёте:
+      <select name="from_currency">
+        <option value="RUB">RUB</option>
+      </select>
+    </label>
+    <label>Получаете:
+      <select name="to_currency" required>
+        <option value="USDT TRC-20">USDT TRC-20</option>
+        <option value="BTC">BTC</option>
+      </select>
+    </label>
+    <label>Сумма:
+      <input type="number" name="amount" min="1" step="any" placeholder="Сумма для обмена" required />
+    </label>
+    <label>Адрес для крипты:
+      <textarea name="crypto_address" rows="2" placeholder="Введите USDT TRC-20 или BTC адрес" required></textarea>
+    </label>
+    <button type="submit">Отправить заявку</button>
+    <div id="message"></div>
+  </form>
 
-<div id="message"></div>
+  <script>
+    const form = document.getElementById('exchangeForm');
+    const msg = document.getElementById('message');
 
-<script>
-  const form = document.getElementById('exchangeForm');
-  const msg = document.getElementById('message');
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const data = {
-      name: form.name.value.trim(),
-      contact: form.contact.value.trim(),
-      from_currency: form.from_currency.value,
-      to_currency: form.to_currency.value,
-      amount: parseFloat(form.amount.value),
-      crypto_address: form.crypto_address.value.trim(),
-    };
-
-    try {
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-      });
-      const json = await res.json();
-      if (json.ok) {
-        msg.textContent = "🔄 Ожидайте выдачу реквизитов. Мы скоро с вами свяжемся.";
-        form.reset();
-      } else {
-        msg.textContent = "Ошибка при отправке заявки.";
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      msg.textContent = "⏳ Отправка...";
+      const data = {
+        name: form.name.value.trim(),
+        contact: form.contact.value.trim(),
+        from_currency: form.from_currency.value,
+        to_currency: form.to_currency.value,
+        amount: parseFloat(form.amount.value),
+        crypto_address: form.crypto_address.value.trim(),
+      };
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.ok) {
+          msg.style.color = "#a0e7a0";
+          msg.textContent = "✅ Заявка принята! Ожидайте выдачу реквизитов.";
+          form.reset();
+        } else {
+          msg.style.color = "#f88";
+          msg.textContent = "❌ Ошибка при отправке заявки.";
+        }
+      } catch {
+        msg.style.color = "#f88";
+        msg.textContent = "❌ Ошибка сети.";
       }
-    } catch (e) {
-      msg.textContent = "Ошибка сети.";
-    }
-  };
-</script>
+    };
+  </script>
 </body>
 </html>
