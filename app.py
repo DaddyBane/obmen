@@ -3,7 +3,7 @@ from flask_cors import CORS
 from datetime import datetime
 import sqlite3
 
-app = Flask(name)  # исправлено name -> name
+app = Flask(name)
 CORS(app)
 
 DB = 'database.db'
@@ -56,6 +56,6 @@ def submit():
         print("Ошибка при сохранении:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-if name == 'main':  # исправлено name -> name
+if name == 'main':
     init_db()
     app.run(host='0.0.0.0', port=3000)
