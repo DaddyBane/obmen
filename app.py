@@ -1,10 +1,10 @@
-import os
-import sqlite3
-from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
+from datetime import datetime
+import sqlite3
+import os
 
-app = Flask(name)  # вот тут правильно name
+app = Flask("app")
 CORS(app)
 
 DB = 'database.db'
@@ -49,24 +49,15 @@ def submit():
                 '''INSERT INTO requests 
                 (name, contact, from_currency, to_currency, amount, crypto_address, time, status, payment_info) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                (
-                    data['name'],
-                    data['contact'],
-                    data['from_currency'],
-                    data['to_currency'],
-                    data['amount'],
-                    data['crypto_address'],
-                    datetime.now().isoformat(),
-                    'new',
-                    ''
-                )
+                (data['name'], data['contact'], data['from_currency'], data['to_currency'],
+                 data['amount'], data['crypto_address'], datetime.now().isoformat(), 'new', '')
             )
         return jsonify({'ok': True})
     except Exception as e:
         print("Ошибка при сохранении:", e)
         return jsonify({'ok': False, 'error': str(e)}), 500
 
-if name == 'main':  # вот тут тоже обязательно name и 'main'
+if True:
     init_db()
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port)
