@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Админка заявок</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
@@ -10,7 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 8px; }
     th { background-color: #eee; }
     input[type="text"] { width: 100%; }
-    button { padding: 4px 10px; }
+    button { padding: 4px 10px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -26,7 +26,7 @@
         <th>Сумма</th>
         <th>Адрес</th>
         <th>Время</th>
-        <th>Комментарий</th>
+        <th>Реквизиты</th>
         <th>Действие</th>
       </tr>
     </thead>
@@ -37,50 +37,62 @@
 
   <script>
     async function loadRequests() {
-      const res = await fetch('/api/requests');
-      const data = await res.json();
-      const body = document.getElementById('requests-body');
-      body.innerHTML = '';
+      try {
+        const res = await fetch('/api/requests');
+        const data = await res.json();
+        const body = document.getElementById('requests-body');
+        body.innerHTML = '';
 
-      if (!data.length) {
-        body.innerHTML = '<tr><td colspan="10">Нет заявок</td></tr>';
-        return;
-      }
+        if (!data.length) {
+          body.innerHTML = '<tr><td colspan="10">Нет заявок</td></tr>';
+          return;
+        }
 
-      for (const r of data) {
-        const row = document.createElement('tr');
-        row.innerHTML = 
-          <td>${r.id}</td>
-          <td>${r.name}</td>
-          <td>${r.contact}</td>
-          <td>${r.from_currency}</td>
-          <td>${r.to_currency}</td>
-          <td>${r.amount}</td>
-          <td>${r.crypto_address}</td>
-          <td>${new Date(r.time).toLocaleString()}</td>
-          <td>
-            <input type="text" id="comment-${r.id}" value="${r.payment_info || ''}" placeholder="Реквизиты...">
-          </td>
-          <td>
-            <button onclick="sendComment(${r.id})">Отправить</button>
-          </td>
-        ;
-        body.appendChild(row);
+        for (const r of data) {
+          const row = document.createElement('tr');
+          row.innerHTML = 
+            <td>${r.id}</td>
+            <td>${r.name}</td>
+            <td>${r.contact}</td>
+            <td>${r.from_currency}</td>
+            <td>${r.to_currency}</td>
+            <td>${r.amount}</td>
+            <td>${r.crypto_address}</td>
+            <td>${new Date(r.time).toLocaleString()}</td>
+            <td>
+              <input type="text" id="comment-${r.id}" value="${r.payment_info || ''}" placeholder="Реквизиты...">
+            </td>
+            <td>
+              <button onclick="sendComment(${r.id})">Отправить</button>
+            </td>
+          ;
+          body.appendChild(row);
+        }
+      } catch (e) {
+        console.error('Ошибка загрузки заявок:', e);
+        const body = document.getElementById('requests-body');
+        body.innerHTML = '<tr><td colspan="10">Ошибка загрузки данных</td></tr>';
       }
     }
 
     async function sendComment(id) {
       const comment = document.getElementById('comment-' + id).value;
-      const res = await fetch('/api/requests/' + id, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_info: comment })
-      });
+      try {
+        const res = await fetch('/api/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, status: 'waiting_payment', payment_info: comment })
+        });
 
-      if (res.ok) {
-        alert('Реквизиты отправлены!');
-      } else {
-        alert('Ошибка при отправке!');
+        if (res.ok) {
+          alert('Реквизиты отправлены!');
+          loadRequests(); // Обновляем список заявок после отправки
+        } else {
+          alert('Ошибка при отправке!');
+        }
+      } catch (e) {
+        alert('Ошибка сети при отправке!');
+        console.error(e);
       }
     }
 
