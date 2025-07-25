@@ -10,7 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 8px; }
     th { background-color: #eee; }
     input[type="text"] { width: 100%; }
-    button { padding: 4px 10px; cursor: pointer; }
+    button { padding: 4px 10px; }
   </style>
 </head>
 <body>
@@ -26,7 +26,7 @@
         <th>Сумма</th>
         <th>Адрес</th>
         <th>Время</th>
-        <th>Реквизиты</th>
+        <th>Комментарий</th>
         <th>Действие</th>
       </tr>
     </thead>
@@ -50,7 +50,7 @@
 
         for (const r of data) {
           const row = document.createElement('tr');
-          row.innerHTML = 
+          row.innerHTML = `
             <td>${r.id}</td>
             <td>${r.name}</td>
             <td>${r.contact}</td>
@@ -65,13 +65,13 @@
             <td>
               <button onclick="sendComment(${r.id})">Отправить</button>
             </td>
-          ;
+          `;
           body.appendChild(row);
         }
       } catch (e) {
         console.error('Ошибка загрузки заявок:', e);
         const body = document.getElementById('requests-body');
-        body.innerHTML = '<tr><td colspan="10">Ошибка загрузки данных</td></tr>';
+        body.innerHTML = '<tr><td colspan="10">Ошибка загрузки заявок</td></tr>';
       }
     }
 
@@ -81,22 +81,22 @@
         const res = await fetch('/api/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: id, status: 'waiting_payment', payment_info: comment })
+          body: JSON.stringify({ id, status: '', payment_info: comment })
         });
 
         if (res.ok) {
           alert('Реквизиты отправлены!');
-          loadRequests(); // Обновляем список заявок после отправки
+          loadRequests();
         } else {
           alert('Ошибка при отправке!');
         }
       } catch (e) {
         alert('Ошибка сети при отправке!');
-        console.error(e);
       }
     }
 
     loadRequests();
+    setInterval(loadRequests, 5000);
   </script>
 </body>
 </html>
